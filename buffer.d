@@ -1,3 +1,5 @@
+debug import std.stdio;
+
 /**
  * A very simple memory buffer to simulate network queues.
  */
@@ -6,14 +8,14 @@ class Buffer(T) {
 
   T peek()
   in {
-    assert(length() > 1);
+    assert(length() >= 1);
   }
   body {
     T data = dataBuffer[0];
     return data;
   }
 
-  T peek(uint num)
+  T[] peek(uint num)
   in {
     assert(num <= length());
   }
@@ -24,7 +26,8 @@ class Buffer(T) {
 
   T read()
   in {
-    assert(length() > 1);
+    debug writeln("read(): length() = ", length());
+    assert(length() >= 1);
   }
   body {
     T data = dataBuffer[0];
@@ -43,10 +46,12 @@ class Buffer(T) {
   }
 
   void write(T data) {
+    debug writeln("write(): writing 1 unit.");
     dataBuffer ~= data;
   }
 
   void write(T[] data) {
+    debug writeln("write(): writing ", data.length, " units.");
     dataBuffer ~= data;
   }
 

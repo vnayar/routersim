@@ -1,3 +1,5 @@
+import ipheader;
+
 struct IpDatagram {
   IpHeader header;
   uint[] data;

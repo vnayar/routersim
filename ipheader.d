@@ -1,13 +1,13 @@
 debug import std.stdio;
-debug import std.conv;
 
 /**
  * Data structure for the IP protocol header.
  * http://www.ietf.org/rfc/rfc791.txt
  */
-struct IPHeader {
-  static immutable size_t wordSize = uint.sizeof * 8;   // In bits
-  static immutable size_t headerWords = 5; // In words
+struct IpHeader {
+  static immutable uint wordBitSize = uint.sizeof * 8;   // In bits
+  static immutable uint wordByteSize = uint.sizeof;      // In bytes
+  static immutable uint headerWords = 5;                 // In words
 
   uint[5] rawData;
 
@@ -72,8 +72,9 @@ struct IPHeader {
   }
 
   uint calculateTotalLength(uint[] data) {
-    uint headerLength = headerWords * uint.sizeof;
-    uint dataLength = data.length * uint.sizeof;
+    uint headerLength = headerWords * wordByteSize;
+    uint dataLength = cast(uint) data.length * wordByteSize;
+    return headerLength + dataLength;
   }
 
   /// Compute the current header checksum according to RFC791.
@@ -106,7 +107,7 @@ struct IPHeader {
   private void setField(alias wordOffset, alias bitOffset, alias length)(uint val)
     if (is(typeof(wordOffset) : uint) && wordOffset < headerWords &&
         is(typeof(bitOffset) : uint) &&
-        is(typeof(length) : uint) && bitOffset + length <= wordSize)
+        is(typeof(length) : uint) && bitOffset + length <= wordBitSize)
   in {
     assert(val >> length == 0, "Parameter is out of bounds.");
   }
@@ -114,7 +115,7 @@ struct IPHeader {
     // Shift the value where it will be placed.
     val <<= bitOffset;
     // Create a mask with 1's where the value will be placed.
-    uint mask = 0xFFFFFFFF >> (wordSize - length) << bitOffset;
+    uint mask = 0xFFFFFFFF >> (wordBitSize - length) << bitOffset;
     // Zero the bits where the new value will be placed.
     rawData[wordOffset] &= ~mask;
     // Insert the new value;
@@ -124,7 +125,7 @@ struct IPHeader {
   private uint getField(alias wordOffset, alias bitOffset, alias length)()
     if (is(typeof(wordOffset) : uint) && wordOffset < headerWords &&
         is(typeof(bitOffset) : uint) &&
-        is(typeof(length) : uint) && bitOffset + length <= wordSize)
+        is(typeof(length) : uint) && bitOffset + length <= wordBitSize)
   body {
     uint mask = 0xFFFFFFFF >> (32 - length);
     return (rawData[wordOffset] >> bitOffset) & mask;
@@ -132,6 +133,8 @@ struct IPHeader {
 }
 
 unittest {
+  import std.conv;
+
   /* An example ping packet from the localhost (10.0.2.15) to (4.2.2.2).
      $ sudo tcpdump -c 1 -i any -x ip host 4.2.2.2 &
      $ ping -c 1 4.2.2.2
@@ -142,7 +145,7 @@ unittest {
      0x0040:  2425 2627 2829 2a2b 2c2d 2e2f 3031 3233
      0x0050:  3435 3637
   */
-  auto header = IPHeader([0x45000054,   // version, ihl, tos, total_length
+  auto header = IpHeader([0x45000054,   // version, ihl, tos, total_length
                           0x00004000,   // indentification, flags, fragment_offset
                           0x40012897,   // ttl, proto, header_cksm
                           0x0a00020f,   // source_addr
@@ -152,6 +155,11 @@ unittest {
   assert(header.calculateHeaderChecksum() == 0x2897,
          "Calculated Header Checksum " ~ to!string(header.calculateHeaderChecksum())
          ~ ", expected " ~ to!string(0x2897));
+
+  // Check that length calculations are correct.
+  assert(header.calculateTotalLength(new uint[10]) == 60,
+         "Calculated Total Length = " ~ to!string(header.calculateTotalLength(new uint[10]))
+         ~ ", expected " ~ to!string(60));
   
   assert(header.getVersion() == 0x4);
   header.setVersion(0xa);
