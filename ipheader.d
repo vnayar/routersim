@@ -4,12 +4,21 @@ debug import std.stdio;
  * Data structure for the IP protocol header.
  * http://www.ietf.org/rfc/rfc791.txt
  */
-struct IpHeader {
+class IpHeader {
   static immutable uint wordBitSize = uint.sizeof * 8;   // In bits
   static immutable uint wordByteSize = uint.sizeof;      // In bytes
   static immutable uint headerWords = 5;                 // In words
 
-  uint[5] rawData;
+  // The raw header in 32-bit words.
+  uint[] rawData;
+
+  this() {
+    rawData.length = headerWords;
+  }
+
+  this(uint[] rawData) {
+    this.rawData = rawData;
+  }
 
   /// Set reasonable default values in the header.
   void init(uint[] data) {
@@ -72,7 +81,7 @@ struct IpHeader {
   }
 
   uint calculateTotalLength(uint[] data) {
-    uint headerLength = headerWords * wordByteSize;
+    uint headerLength = cast(uint) rawData.length * wordByteSize;
     uint dataLength = cast(uint) data.length * wordByteSize;
     return headerLength + dataLength;
   }
@@ -81,7 +90,7 @@ struct IpHeader {
   uint calculateHeaderChecksum() {
     uint checksum = 0;
     
-    foreach (wordIndex ; 0 .. headerWords) {
+    foreach (wordIndex ; 0 .. rawData.length) {
       checksum += 0x0000FFFF & rawData[wordIndex];
       checksum += rawData[wordIndex] >> 16;
     }
@@ -105,10 +114,11 @@ struct IpHeader {
    *   length     = How many bits long is the field.
    */
   private void setField(alias wordOffset, alias bitOffset, alias length)(uint val)
-    if (is(typeof(wordOffset) : uint) && wordOffset < headerWords &&
+    if (is(typeof(wordOffset) : uint) &&
         is(typeof(bitOffset) : uint) &&
         is(typeof(length) : uint) && bitOffset + length <= wordBitSize)
   in {
+    assert(wordOffset < rawData.length, "wordOffset is out of header bounds");
     assert(val >> length == 0, "Parameter is out of bounds.");
   }
   body {
@@ -123,9 +133,12 @@ struct IpHeader {
   }
 
   private uint getField(alias wordOffset, alias bitOffset, alias length)()
-    if (is(typeof(wordOffset) : uint) && wordOffset < headerWords &&
+    if (is(typeof(wordOffset) : uint) &&
         is(typeof(bitOffset) : uint) &&
         is(typeof(length) : uint) && bitOffset + length <= wordBitSize)
+  in {
+    assert(wordOffset < rawData.length, "wordOffset is out of bounds");
+  }
   body {
     uint mask = 0xFFFFFFFF >> (32 - length);
     return (rawData[wordOffset] >> bitOffset) & mask;
@@ -145,11 +158,11 @@ unittest {
      0x0040:  2425 2627 2829 2a2b 2c2d 2e2f 3031 3233
      0x0050:  3435 3637
   */
-  auto header = IpHeader([0x45000054,   // version, ihl, tos, total_length
-                          0x00004000,   // indentification, flags, fragment_offset
-                          0x40012897,   // ttl, proto, header_cksm
-                          0x0a00020f,   // source_addr
-                          0x04020202]); // dest_addr
+  auto header = new IpHeader([0x45000054,   // version, ihl, tos, total_length
+                              0x00004000,   // indentification, flags, fragment_offset
+                              0x40012897,   // ttl, proto, header_cksm
+                              0x0a00020f,   // source_addr
+                              0x04020202]); // dest_addr
 
   // Compare our header checksum calculations against a real packet.
   assert(header.calculateHeaderChecksum() == 0x2897,

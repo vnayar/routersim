@@ -5,7 +5,7 @@ import link;
  * A class representing a simple network node that can send/receive datagrams.
  */
 class Node {
-  // Associate a buffer with every physical port.
+  // Associate a read buffer with every physical port.
   Buffer[] portBuffers;
 
   this(int ports) {
@@ -45,17 +45,44 @@ unittest {
   import iplink;
 
   class ReceiveNode : Node {
+    // Links to listen to.
     IpLink[] links;
-    
+
+    void run() {
+      foreach (buffer ; portBuffers) {
+        
+      }
+    }
   }
 
   class SendNode : Node {
+    // Links to send messages on.
+    IpLink[] links;
+    uint counter = 0;
+
+    void addLink(IpLink link) {
+      links ~= link;
+    }
+
+    void run() {
+      foreach (link ; links) {
+        // The payload is a single integer.
+        auto ipDatagram = IpDatagram(IpHeader(), [counter]);
+        link.send(ipDatagram);
+      }
+    }
+    
   }
 
   auto receiveNode = new ReceiveNode(3);
   auto sendNode = new SendNode(3);
 
   auto link1 = new IpLink(Node.createLink(receiveNode, 2, sendNode, 1));
+  sendNode.addLink(link1);
+  receiveNode.addLink(link1);
+
   auto link2 = new IpLink(Node.createLink(receiveNode, 0, sendNode, 0));
+  sendNode.addLink(link2);
+  receiveNode.addLink(link2);
                   
 }
