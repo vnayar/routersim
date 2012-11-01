@@ -3,7 +3,8 @@
 files="\
   buffer.d \
   ipheader.d \
-  iplink.d \
+  net.d \
+  ipnetport.d \
   "
 
 

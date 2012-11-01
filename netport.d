@@ -8,11 +8,11 @@ import buffer;
  * Note: In the observer patter, this is the observer.
  */
 class NetPort {
-  Buffer buffer;
-  Net net;
+  private Buffer!uint buffer;
+  private Net net;
   
   this() {
-    buffer = new Buffer!utin();
+    buffer = new Buffer!uint();
   }
 
   /// Respond to messages from the Net.
@@ -20,13 +20,22 @@ class NetPort {
     buffer.write(net.getDatagram());
   }
 
+  // Used by derived classes.
+  Net getNet() {
+    return net;
+  }
+
   /// Called by a Net when being attached.
   void setNet(Net net) {
     this.net = net;
   }
 
-  Buffer getBuffer() {
+  Buffer!uint getBuffer() {
     return buffer;
+  }
+
+  bool hasData() {
+    return buffer.length > 0;
   }
 
 }
