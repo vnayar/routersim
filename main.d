@@ -1,11 +1,12 @@
+import ipaddress;
 import net;
 import sendernode;
 import receivernode;
-import ipaddress;
+import routernode;
 
 
 /**
- * A very basic simulation with no router (yet).
+ * A very basic simulation with a router.
  * +--------------+    net1
  * | senderNode1 0|<----+    +-------------+
  * +--------------+     |    | routerNode  |
@@ -19,19 +20,34 @@ import ipaddress;
  *                           +-------------+
  */
 void main() {
-  auto net = new Net();
+  auto net1 = new Net();
   auto senderNode1 = new SenderNode(IpAddress("10.0.0.1"), IpAddress("10.0.1.1"));
-  net.attach(senderNode1.getIpNetPort(0));
+  net1.attach(senderNode1.getIpNetPort(0));
 
   auto senderNode2 = new SenderNode(IpAddress("10.0.0.2"), IpAddress("10.0.1.1"));
-  net.attach(senderNode2.getIpNetPort(0));
+  net1.attach(senderNode2.getIpNetPort(0));
 
+  // Now configure our router node.
+  auto addressPortMapCSV = q"EOS
+10.0.0.1,0
+10.0.0.2,0
+10.0.1.1,2
+EOS";
+  auto routerNode = new RouterNode(8); // An 8-port router.
+  routerNode.loadAddressPortMapFromCSV(addressPortMapCSV);
+  net1.attach(routerNode.getIpNetPort(0));
+  
+  auto net2 = new Net();
+  net2.attach(routerNode.getIpNetPort(2));
+  
   auto receiverNode = new ReceiverNode(IpAddress("10.0.1.1"));
-  net.attach(receiverNode.getIpNetPort(0));
+  net2.attach(receiverNode.getIpNetPort(0));
 
+  // Let every node send/receive for three cycles.
   foreach (i; 0 .. 3) {
     senderNode1.run();
     senderNode2.run();
+    routerNode.run();
     receiverNode.run();
   }
 

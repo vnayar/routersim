@@ -6,6 +6,7 @@ files="\
   buffer.d \
   net.d \
   ipnetport.d \
+  routernode.d \
   "
 
 
