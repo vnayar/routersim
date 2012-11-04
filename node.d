@@ -14,6 +14,10 @@ class Node {
     return ipNetPorts[netPortIndex];
   }
 
+  IpNetPort[] getIpNetPorts() {
+    return ipNetPorts;
+  }
+
   /// A function run every cycle that specifies node behaviour.
   abstract void run();
 }

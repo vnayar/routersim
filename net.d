@@ -4,6 +4,8 @@ import std.range;
 
 import netport;
 
+debug import std.stdio;
+
 
 /**
  * A network connection with one or more NetPorts attached.
@@ -46,14 +48,17 @@ class Net {
   /**
    * Let all listening NetPorts know new data has arrived.
    */
-  void notify() {
+  void notify(NetPort excludeNetPort = null) {
     foreach (netPort ; _netPortList) {
-      netPort.update();
+      if (netPort !is excludeNetPort)
+        netPort.update();
     }
   }
 }
 
 unittest {
+  debug writeln("-- unittest: ", __FILE__, " --");
+
   uint updateCounter = 0;
 
   // Make a simple extension of NetPort that has minimal dependency.

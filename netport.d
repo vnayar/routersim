@@ -1,6 +1,7 @@
 import net;
 import buffer;
 
+debug import std.stdio;
 
 /**
  * A port on a network node to a network that responds to new messages on the Net.
@@ -35,6 +36,7 @@ class NetPort {
   }
 
   bool hasData() {
+    debug writeln("NetPort.hasData(): buffer.length = ", buffer.length);
     return buffer.length > 0;
   }
 

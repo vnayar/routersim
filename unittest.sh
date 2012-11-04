@@ -1,8 +1,9 @@
 #!/bin/bash
 
 files="\
-  buffer.d \
+  ipaddress.d \
   ipheader.d \
+  buffer.d \
   net.d \
   ipnetport.d \
   "

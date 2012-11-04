@@ -1,7 +1,8 @@
-import node;
-import ipnetport;
 import ipheader;
 import ipdatagram;
+import ipaddress;
+import node;
+import ipnetport;
 
 /**
  * A simple 1-NetPort node that receives IpDatagrams addressed to it.
@@ -10,7 +11,7 @@ class ReceiverNode : Node {
   // A debugging counter stating how many packets have been received.
   uint counter;
 
-  this(uint address) {
+  this(IpAddress address) {
     // Initialize IpNetPort 0.
     auto ipNetPort = new IpNetPort();
     ipNetPort.setAddress(address);
@@ -23,7 +24,7 @@ class ReceiverNode : Node {
     while (ipNetPort.hasData()) {
       IpDatagram ipDatagram = ipNetPort.receive();
       if (ipDatagram.getIpHeader().getDestinationAddress() ==
-          ipNetPort.getAddress()) {
+          ipNetPort.getAddress().value) {
         counter++;
       }
     }

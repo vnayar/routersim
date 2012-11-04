@@ -1,7 +1,8 @@
-import node;
-import ipnetport;
 import ipheader;
 import ipdatagram;
+import ipaddress;
+import node;
+import ipnetport;
 
 
 /**
@@ -13,7 +14,7 @@ class SenderNode : Node {
   // A reference header used to create new IpDatagrams.
   IpHeader ipHeader;
 
-  this(uint address, uint destinationAddress) {
+  this(IpAddress address, IpAddress destinationAddress) {
     // Create our single IpNetPort.
     auto ipNetPort = new IpNetPort();
     ipNetPort.setAddress(address);
@@ -21,8 +22,8 @@ class SenderNode : Node {
 
     // Initialize our template header.
     ipHeader = new IpHeader();
-    ipHeader.setSourceAddress(address);
-    ipHeader.setDestinationAddress(destinationAddress);
+    ipHeader.setSourceAddress(address.value);
+    ipHeader.setDestinationAddress(destinationAddress.value);
   }
 
   void run() {
