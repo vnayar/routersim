@@ -18,8 +18,13 @@ class IpDatagram {
   this() {
     datagram = new uint[IpHeader.headerWords];
     header = new IpHeader(datagram[0..IpHeader.headerWords]);
+    // Copy initial contents of a fresh header into memory.
+    header.rawData[0..IpHeader.headerWords] =
+      (new IpHeader()).rawData[0..IpHeader.headerWords];
+    // This is just here for completeness, there is no data yet.
     data = datagram[IpHeader.headerWords .. $];
-    header.init(data);
+    // Perform length and checksum calculations.
+    init();
   }
 
   this(uint[] datagram)
@@ -31,11 +36,16 @@ class IpDatagram {
     this.datagram = datagram;
     header = new IpHeader(datagram[0..IpHeader.headerWords]);
     data = datagram[IpHeader.headerWords .. $];
-    header.init(data);
+    init();
   }
 
   this(IpHeader ipHeader, uint[] data) {
     this(ipHeader.rawData ~ data);
+  }
+
+  // Re-calculate the IP header including the checksum.
+  void init() {
+    header.init(data);
   }
 
   IpHeader getIpHeader() {

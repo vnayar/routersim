@@ -14,6 +14,13 @@ class IpHeader {
 
   this() {
     rawData.length = headerWords;
+    setVersion(4);
+    setHeaderLength(5);
+    setTypeOfService(0);
+    setFlags(0);
+    setFragmentOffset(0);
+    setTimeToLive(50u); // 50 hops at max
+    setProtocol(17u); // Default to UDP
   }
 
   this(uint[] rawData) {
@@ -22,14 +29,7 @@ class IpHeader {
 
   /// Set reasonable default values in the header.
   void init(uint[] data) {
-    setVersion(4);
-    setHeaderLength(5);
-    setTypeOfService(0);
     setTotalLength(calculateTotalLength(data));
-    setFlags(0);
-    setFragmentOffset(0);
-    setTimeToLive(50u); // 50 hops at max
-    setProtocol(17u); // Default to UDP
     setHeaderChecksum(calculateHeaderChecksum());
   }
 

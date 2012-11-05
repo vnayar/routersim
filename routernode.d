@@ -51,17 +51,28 @@ class RouterNode : Node {
       while (ipNetPort.hasData()) {
         IpDatagram ipDatagram = ipNetPort.receive();
         debug writeln("routernode.run(): Routing packet.");
-        // Now find what port it goes to, if any at all.
-        uint destAddr = ipDatagram.getIpHeader().getDestinationAddress();
-        if (destAddr in addressPortMap) {
-          uint port = addressPortMap[destAddr];
-          debug writeln("routernode.run(): Sending to port ", port);
-          auto destIpNetPort = getIpNetPort(port);
-          destIpNetPort.send(ipDatagram);
-        }
+        forwardDatagram(ipDatagram);
       }
     }
     debug writeln("routernode.run(): Done.");
+  }
+
+  private void forwardDatagram(IpDatagram ipDatagram) {
+    // Now find what port it goes to, if any at all.
+    uint destAddr = ipDatagram.getIpHeader().getDestinationAddress();
+
+    // If we do not have a route, drop the datagram.
+    if (destAddr !in addressPortMap)
+      return;
+
+    uint port = addressPortMap[destAddr];
+    debug writeln("routernode.run(): Sending to port ", port);
+    auto destIpNetPort = getIpNetPort(port);
+
+    auto ipHeader = ipDatagram.getIpHeader();
+    auto newTimeToLive = ipHeader.getTimeToLive() - 1;
+    ipHeader.setTimeToLive(newTimeToLive);
+    destIpNetPort.send(ipDatagram);
   }
 }
 
@@ -74,6 +85,7 @@ unittest {
     override void update() {
       debug writeln("TestIpNetPort packet seen.");
       counter++;
+      super.update();
     }
   }
 
@@ -109,11 +121,21 @@ EOS";
   ipHeader.setSourceAddress(IpAddress("10.0.0.2").value);
   ipHeader.setDestinationAddress(IpAddress("10.0.0.3").value);
   auto ipDatagram = new IpDatagram(ipHeader, [1u, 2u, 3u]);
+  auto ttl = ipDatagram.getIpHeader().getTimeToLive();
   net0.setDatagram(ipDatagram.datagram);
   net0.notify();
 
   routerNode.run();
-
+  
   assert(np0.counter == 1);  // Just to make sure we hit the wire.
   assert(np1.counter == 1);  // Check if the router did its job.
+
+  // Also make sure that the TTL was decremented.
+  auto np0Datagram = np0.receive();
+  auto np1Datagram = np1.receive();
+
+  debug writeln("np0Datagram ttl = ", np0Datagram.getIpHeader().getTimeToLive());
+  debug writeln("np1Datagram ttl = ", np1Datagram.getIpHeader().getTimeToLive());
+  assert(np1Datagram.getIpHeader().getTimeToLive() ==
+         np0Datagram.getIpHeader().getTimeToLive() - 1);
 }
