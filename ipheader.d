@@ -97,9 +97,9 @@ class IpHeader {
     // In computing the checksum, the header is considered to be 0.
     checksum -= cast(ushort) rawData[2];
     // Add in any overflow for one's complement.
-    checksum = (checksum >> 16) + checksum;
+    checksum = (checksum >> 16) + (checksum & 0x0000FFFF);
     // And make sure the overflow doesn't cause another overflow.
-    checksum = (checksum >> 16) + checksum;
+    checksum = (checksum >> 16) + (checksum & 0x0000FFFF);
 
     // And finally return the one's complement of the sum.
     return ~checksum & 0x0000FFFF;
