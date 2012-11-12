@@ -43,7 +43,7 @@ class RouterNode : Node {
   }
 
   // Read traffic from ipNetPorts and redirect it to another ipNetPort.
-  void run() {
+  override void run() {
     // Check for visible IpDatagrams.
     auto ipNetPorts = getIpNetPorts();
     foreach (srcPortIndex, ipNetPort ; ipNetPorts) {
