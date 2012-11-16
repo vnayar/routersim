@@ -3,9 +3,11 @@
 files="\
   ipaddress.d \
   ipheader.d \
-  udpheader.d \
   ipdatagram.d \
+  udpheader.d \
   udpdatagram.d \
+  tcpheader.d \
+  tcpdatagram.d \
   buffer.d \
   net.d \
   ipnetport.d \

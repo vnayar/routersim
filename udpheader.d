@@ -1,3 +1,4 @@
+import header;
 import ipheader;
 
 debug import std.stdio;
@@ -6,21 +7,16 @@ debug import std.stdio;
 /**
  * A UDP Header and associated functions following RFC768.
  */
-class UdpHeader {
-  static immutable uint wordBitSize = uint.sizeof * 8;   // In bits
-  static immutable uint wordByteSize = uint.sizeof;      // In bytes
+class UdpHeader : Header {
   static immutable uint headerWords = 2;                 // In words
-
-  // The raw header in 32-bit word.
-  uint[] rawData;
 
   this() {
     rawData.length = headerWords;
     setSourcePort(0);
   }
-
+  
   this(uint[] rawData) {
-    this.rawData = rawData;
+    super(rawData);
   }
 
   void init(IpHeader ipHeader, uint[] data) {
@@ -92,45 +88,6 @@ class UdpHeader {
     if (checksum == 0x00000000)
       return 0x0000FFFF;
     return checksum;
-  }
-
-  /**
-   * Set the specified bits in the header to the specified value.
-   * A separate function will be compiled for each compilation parameter set.
-   * Params:
-   *   wordOffset = The word the field is located in.
-   *   bitOffset  = How many bits into the word the field is in.
-   *   length     = How many bits long is the field.
-   */
-  private void setField(alias wordOffset, alias bitOffset, alias length)(uint val)
-    if (is(typeof(wordOffset) : uint) &&
-        is(typeof(bitOffset) : uint) &&
-        is(typeof(length) : uint) && bitOffset + length <= wordBitSize)
-  in {
-    assert(wordOffset < rawData.length, "wordOffset is out of header bounds");
-    assert(val >> length == 0, "Parameter is out of bounds.");
-  }
-  body {
-    // Shift the value where it will be placed.
-    val <<= bitOffset;
-    // Create a mask with 1's where the value will be placed.
-    uint mask = 0xFFFFFFFF >> (wordBitSize - length) << bitOffset;
-    // Zero the bits where the new value will be placed.
-    rawData[wordOffset] &= ~mask;
-    // Insert the new value;
-    rawData[wordOffset] += val;
-  }
-
-  private uint getField(alias wordOffset, alias bitOffset, alias length)()
-    if (is(typeof(wordOffset) : uint) &&
-        is(typeof(bitOffset) : uint) &&
-        is(typeof(length) : uint) && bitOffset + length <= wordBitSize)
-  in {
-    assert(wordOffset < rawData.length, "wordOffset is out of bounds");
-  }
-  body {
-    uint mask = 0xFFFFFFFF >> (32 - length);
-    return (rawData[wordOffset] >> bitOffset) & mask;
   }
 }
 
