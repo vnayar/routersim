@@ -61,7 +61,7 @@ class IpNetPort : NetPort {
 }
 
 unittest {
-  debug writeln("-- unittest: ", __FILE__, " --");
+  debug writeln("-- unittest: ", __FILE__, ":", __LINE__, " --");
 
   auto net = new Net();
   auto netPort1 = new IpNetPort();

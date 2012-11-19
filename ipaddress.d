@@ -1,6 +1,8 @@
 import std.string;
 import std.conv;
 
+debug import std.stdio;
+
 struct IpAddress {
   uint value;
 
@@ -42,6 +44,8 @@ struct IpAddress {
 }
 
 unittest {
+  debug writeln("-- unittest: ", __FILE__, ":", __LINE__,  " --");
+
   IpAddress a1 = (127u << 24) + (34u << 16) + (17u << 8) + 78u;
   IpAddress a2 = "127.34.17.78";
 

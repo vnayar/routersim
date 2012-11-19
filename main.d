@@ -2,7 +2,7 @@ import ipaddress;
 import net;
 import sendernode;
 import receivernode;
-import routernode;
+import csvrouternode;
 
 
 /**
@@ -33,7 +33,7 @@ void main() {
 10.0.0.2,0
 10.0.1.1,2
 EOS";
-  auto routerNode = new RouterNode(8); // An 8-port router.
+  auto routerNode = new CsvRouterNode(8); // An 8-port router.
   routerNode.loadAddressPortMapFromCSV(addressPortMapCSV);
   net1.attach(routerNode.getIpNetPort(0));
   

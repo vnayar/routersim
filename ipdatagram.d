@@ -1,5 +1,8 @@
 import ipheader;
 
+debug import std.stdio;
+
+
 /**
  * A datagram with an IP header.
  * Serialization, length, and checksum logic are taken care of here.
@@ -68,6 +71,8 @@ class IpDatagram {
 
 // Test the default constructor.
 unittest {
+  debug writeln("-- unittest: ", __FILE__, ":", __LINE__, " --");
+
   IpHeader ipHeader = new IpHeader();
   ipHeader.init([]);
   IpDatagram ipDatagram = new IpDatagram();

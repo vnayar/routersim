@@ -13,7 +13,7 @@ debug import std.stdio;
 /**
  * A routing node capable of delivering traffic to specific ports.
  */
-class RouterNode : Node {
+class CsvRouterNode : Node {
   uint[uint] addressPortMap;
 
   this(uint numPorts) {
@@ -77,7 +77,8 @@ class RouterNode : Node {
 }
 
 unittest {
-  debug writeln("-- unittest: ", __FILE__, " --");
+  debug writeln("-- unittest: ", __FILE__, ":", __LINE__, " --");
+
   import net;
 
   class TestIpNetPort : IpNetPort {
@@ -89,7 +90,7 @@ unittest {
     }
   }
 
-  auto routerNode = new RouterNode(3);
+  auto routerNode = new CsvRouterNode(3);
 
   auto net0 = new Net();
   net0.attach(routerNode.getIpNetPort(0));

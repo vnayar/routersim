@@ -10,8 +10,11 @@ files="\
   tcpdatagram.d \
   buffer.d \
   net.d \
+  ipnet.d \
   ipnetport.d \
-  routernode.d \
+  csvrouternode.d \
+  ripmessage.d \
+  riprouternode.d \
   "
 
 

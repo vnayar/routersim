@@ -21,26 +21,24 @@ class Net {
     _netPortList = SList!NetPort();
   }
 
+  /// Attach a NetPort to be notified when new data arrives on the net.
   void attach(NetPort netPort) {
     netPort.setNet(this);
     _netPortList.insertFront(netPort);
   }
 
+  /// Remove a NetPort so that it is no longer notified.
   void detach(NetPort netPort) {
     auto r = find(_netPortList[], netPort);
     _netPortList.linearRemove(take(r, 1));
   }
 
-  /**
-   * Read the data currently on the network line.
-   */
+  /// Read the data currently on the network line.
   uint[] getDatagram() {
     return _datagram;
   }
 
-  /**
-   * Put raw data onto a network line for all to hear.
-   */
+  /// Put raw data onto a network line for all to hear.
   void setDatagram(uint[] datagram) {
     _datagram = datagram;
   }
@@ -56,8 +54,9 @@ class Net {
   }
 }
 
+// A battery of tests to confirm Net works correctly.
 unittest {
-  debug writeln("-- unittest: ", __FILE__, " --");
+  debug writeln("-- unittest: ", __FILE__, ":", __LINE__, " --");
 
   uint updateCounter = 0;
 

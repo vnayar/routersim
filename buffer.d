@@ -6,6 +6,7 @@ debug import std.stdio;
 class Buffer(T) {
   T[] dataBuffer;
 
+  // Look ahead and read without consuming from the buffer.
   T peek()
   in {
     assert(length() >= 1);
@@ -15,6 +16,7 @@ class Buffer(T) {
     return data;
   }
 
+  // Look ahead for 'num' data items without consuming them.
   T[] peek(uint num)
   in {
     assert(num <= length());
@@ -24,6 +26,7 @@ class Buffer(T) {
     return data;
   }
 
+  // Read and consume a single data item.
   T read()
   in {
     debug writeln("read(): length() = ", length());
@@ -35,6 +38,7 @@ class Buffer(T) {
     return data;
   }
 
+  // Read and consume many data items.
   T[] read(uint num)
   in {
     assert(num <= length());
@@ -45,22 +49,28 @@ class Buffer(T) {
     return data;
   }
 
+  // Write a single item on the buffer for subsequent reading.
   void write(T data) {
     debug writeln("write(): writing 1 unit.");
     dataBuffer ~= data;
   }
 
+  // Write many data items on the buffer.
   void write(T[] data) {
     debug writeln("write(): writing ", data.length, " units.");
     dataBuffer ~= data;
   }
 
+  // Determine how many items are currently in the buffer.
   size_t length() {
     return dataBuffer.length;
   }
 }
 
+// A swath of tests to confirm that Buffer works correctly.
 unittest {
+  debug writeln("-- unittest: ", __FILE__, ":", __LINE__, " --");
+
   auto buf = new Buffer!int();
 
   // Single read-write test.

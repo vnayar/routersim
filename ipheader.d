@@ -9,6 +9,8 @@ debug import std.stdio;
  */
 class IpHeader : Header {
   static immutable uint headerWords = 5;                 // In words
+  
+  enum Protocol : uint {ICMP = 1u, TCP = 6u, UDP = 17u};
 
   this() {
     rawData.length = headerWords;
@@ -18,7 +20,7 @@ class IpHeader : Header {
     setFlags(0);
     setFragmentOffset(0);
     setTimeToLive(50u); // 50 hops at max
-    setProtocol(17u); // Default to UDP
+    setProtocol(Protocol.UDP); // Default to UDP
   }
 
   this(uint[] rawData) {
@@ -106,6 +108,8 @@ class IpHeader : Header {
 }
 
 unittest {
+  debug writeln("-- unittest: ", __FILE__, ":", __LINE__, " --");
+
   import std.conv;
 
   /* An example ping packet from the localhost (10.0.2.15) to (4.2.2.2).

@@ -105,6 +105,8 @@ class TcpHeader : Header {
 }
 
 unittest {
+  debug writeln("-- unittest: ", __FILE__, ":", __LINE__, " --");
+
   // $ sudo tcpdump -i any -nx tcp port 80
   // $ curl http://ddg.gg
   // 22:04:44.535266 IP 208.94.146.81.80 > 10.0.2.15.54861:

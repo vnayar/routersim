@@ -83,6 +83,8 @@ class TcpDatagram : IpDatagram {
 
 // Check that the UdpDatagram does not duplicate memory.
 unittest {
+  debug writeln("-- unittest: ", __FILE__, " --");
+
   auto ipHeader = new IpHeader();
   ipHeader.setSourceAddress(12345);
   ipHeader.setDestinationAddress(67890);

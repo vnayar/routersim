@@ -20,6 +20,7 @@ class UdpHeader : Header {
   }
 
   void init(IpHeader ipHeader, uint[] data) {
+    setLength(cast(short)(headerWords + data.length) * wordByteSize);
     setChecksum(calculateChecksum(ipHeader, data));
   }
 
@@ -44,18 +45,12 @@ class UdpHeader : Header {
     uint checksum = 0;
     
     // First add in the pseudo-header from RFC768.
-    debug writefln("getSourceAddress() = %x", ipHeader.getSourceAddress());
     checksum += 0x0000FFFF & ipHeader.getSourceAddress();
     checksum += ipHeader.getSourceAddress() >> 16;
-    debug writefln("getDestinationAddress() = %x", ipHeader.getDestinationAddress());
     checksum += 0x0000FFFF & ipHeader.getDestinationAddress();
     checksum += ipHeader.getDestinationAddress() >> 16;
-    debug writefln("getProtocol() = %x", ipHeader.getProtocol());
     checksum += ipHeader.getProtocol();
-    debug writefln("getLength() = %x", getLength());
     checksum += getLength();
-
-    debug writefln("PseudoHeader checksum = %x", checksum);
 
     // Next add in the UDP header.
     foreach (wordIndex ; 0 .. rawData.length) {
@@ -63,26 +58,20 @@ class UdpHeader : Header {
       checksum += rawData[wordIndex] >> 16;
     }
     checksum -= getChecksum(); // For calculation purposes, checksum = 0.
-    debug writefln("  with UDP Header = %x", checksum);
 
     // And now the data.
     foreach (wordIndex ; 0 .. data.length) {
       checksum += 0x0000FFFF & data[wordIndex];
       checksum += data[wordIndex] >> 16;
     }
-    debug writefln("  with Data = %x", checksum);
 
     // Add in any overflow for one's complement.
     checksum = (checksum >> 16) + (checksum & 0x0000FFFF);
     // And make sure the overflow doesn't cause another overflow.
     checksum = (checksum >> 16) + (checksum & 0x0000FFFF);
 
-    debug writefln("  with overflow = %x", checksum);
-
     // Get the one's complement of the sum thus far.
     checksum = ~checksum & 0x0000FFFF;
-
-    debug writefln("Complement = %x", checksum);
 
     // Zero is a reserved special value (unused checksum), use 0xFFFF instead.
     if (checksum == 0x00000000)
@@ -93,6 +82,8 @@ class UdpHeader : Header {
 
 // Unit Tests against a real captured UDP header.
 unittest {
+  debug writeln("-- unittest: ", __FILE__, " --");
+
   // 21:15:52.454036 IP 10.0.2.3.53 > 10.0.2.15.32014:
   //   39936 NXDomain*- 0/0/0 (48)
   uint[] udpDatagram = [
