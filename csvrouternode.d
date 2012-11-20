@@ -16,6 +16,10 @@ debug import std.stdio;
 class CsvRouterNode : Node {
   uint[uint] addressPortMap;
 
+  this(IpAddress[] ipAddressList) {
+    super(ipAddressList);
+  }
+
   this(uint numPorts) {
     foreach (portIndex ; 0 .. numPorts) {
       // The router ports have no address.

@@ -28,8 +28,13 @@ class RipRouterNode : Node {
   }
   // A mapping from destination address to port.
   RouteEntry[uint] addressRouteEntryMap;
+  uint forwardCount;
 
   this() {
+  }
+
+  this(IpAddress[] ipAddressList) {
+    super(ipAddressList);
   }
 
   this(uint numPorts) {
@@ -62,6 +67,9 @@ class RipRouterNode : Node {
 
         // Otherwise route normally.
         debug writeln("routernode.run(): Routing packet.");
+        debug writeln("## srcPortIndex = ", srcPortIndex, ", ",
+                      ipNetPort.getAddress.value);
+        forwardCount++;
         forwardDatagram(ipDatagram);
       }
     }
@@ -192,6 +200,11 @@ class RipRouterNode : Node {
     debug writeln("forwardDatagram()");
     // Now find what port it goes to, if any at all.
     uint destAddr = ipDatagram.getIpHeader().getDestinationAddress();
+    debug writeln("forwardDatagram() - protocol = ",
+                  ipDatagram.getIpHeader().getProtocol());
+    debug writeln("forwardDatagram() - ttl = ",
+                  ipDatagram.getIpHeader().getTimeToLive());
+
 
     // If we do not have a route, drop the datagram.
     if (destAddr !in addressRouteEntryMap)
@@ -271,6 +284,7 @@ unittest {
   assert(routerNode2.addressRouteEntryMap.length == 4);
   assert(routerNode3.addressRouteEntryMap.length == 4);
 
+  // Check metrics according to known network distance.
   assert(routerNode1.addressRouteEntryMap[IpAddress("10.0.1.3").value].metric == 2);
   assert(routerNode1.addressRouteEntryMap[IpAddress("10.0.1.2").value].metric == 1);
   assert(routerNode1.addressRouteEntryMap[IpAddress("10.0.0.1").value].metric == 0);

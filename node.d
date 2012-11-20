@@ -1,10 +1,22 @@
 import ipnetport;
+import ipaddress;
 
 /**
  * A class representing a simple network node that can send/receive datagrams.
  */
 class Node {
   IpNetPort[] ipNetPorts;
+
+  this() {
+  }
+
+  this(IpAddress[] ipAddressList) {
+    foreach (ipAddress ; ipAddressList) {
+      auto ipNetPort = new IpNetPort();
+      ipNetPort.setAddress(ipAddress);
+      addIpNetPort(ipNetPort);
+    }
+  }
 
   void addIpNetPort(IpNetPort ipNetPort) {
     ipNetPorts ~= ipNetPort;

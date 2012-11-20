@@ -1,8 +1,12 @@
 import ipheader;
 import ipdatagram;
+import tcpdatagram;
 import ipaddress;
 import node;
 import ipnetport;
+
+debug import std.stdio;
+
 
 /**
  * A simple 1-NetPort node that receives IpDatagrams addressed to it.
@@ -18,14 +22,21 @@ class ReceiverNode : Node {
     addIpNetPort(ipNetPort);
   }
 
-  void run() {
+  override void run() {
     // Check for self-destined IpDatagrams.
     auto ipNetPort = getIpNetPort(0);
     while (ipNetPort.hasData()) {
+      debug writeln("New Packet.");
       IpDatagram ipDatagram = ipNetPort.receive();
-      if (ipDatagram.getIpHeader().getDestinationAddress() ==
-          ipNetPort.getAddress().value) {
-        counter++;
+      debug writeln("  Protocol = ", ipDatagram.getIpHeader().getProtocol());
+      if (ipDatagram.getIpHeader().getProtocol() == IpHeader.Protocol.TCP) {
+        debug writeln("  New TCP Packet.");
+        auto tcpDatagram = new TcpDatagram(ipDatagram.datagram);
+        if (tcpDatagram.getTcpHeader().getDestinationPort() == 4321) {
+          debug writeln("    New TCP Packet with right port.");
+          // This is the message we want!
+          counter++;
+        }
       }
     }
   }

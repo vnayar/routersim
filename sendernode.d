@@ -1,6 +1,7 @@
 import ipheader;
-import ipdatagram;
 import ipaddress;
+import tcpheader;
+import tcpdatagram;
 import node;
 import ipnetport;
 
@@ -13,6 +14,7 @@ class SenderNode : Node {
   uint counter = 0;
   // A reference header used to create new IpDatagrams.
   IpHeader ipHeader;
+  TcpHeader tcpHeader;
 
   this(IpAddress address, IpAddress destinationAddress) {
     // Create our single IpNetPort.
@@ -24,9 +26,14 @@ class SenderNode : Node {
     ipHeader = new IpHeader();
     ipHeader.setSourceAddress(address.value);
     ipHeader.setDestinationAddress(destinationAddress.value);
+    ipHeader.setProtocol(IpHeader.Protocol.TCP);
+
+    tcpHeader = new TcpHeader();
+    tcpHeader.setSourcePort(1234);
+    tcpHeader.setDestinationPort(4321);
   }
 
-  void run() {
+  override void run() {
     // Check for any incoming data and ignore it.
     auto ipNetPort = getIpNetPort(0);
     while (ipNetPort.hasData()) {
@@ -34,8 +41,8 @@ class SenderNode : Node {
     }
 
     // Now send out our all-important message.
-    auto ipDatagram = new IpDatagram(ipHeader, [counter]);
-    ipNetPort.send(ipDatagram);
+    auto tcpDatagram = new TcpDatagram(ipHeader, tcpHeader, [counter]);
+    ipNetPort.send(tcpDatagram);
 
     counter++;
   }
