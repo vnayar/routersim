@@ -32,4 +32,9 @@ class Node {
 
   /// A function run every cycle that specifies node behaviour.
   abstract void run();
+
+  // Show node-level status information.
+  string status() {
+    return "";
+  }
 }

@@ -5,6 +5,8 @@ import ipaddress;
 import node;
 import ipnetport;
 
+import std.string;
+
 debug import std.stdio;
 
 
@@ -39,5 +41,9 @@ class ReceiverNode : Node {
         }
       }
     }
+  }
+
+  override string status() {
+    return format("received:%4d", counter);
   }
 }

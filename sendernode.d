@@ -5,6 +5,7 @@ import tcpdatagram;
 import node;
 import ipnetport;
 
+import std.string;
 
 /**
  * A simple 1-NetPort node that sends a new IpDatagram each time it runs.
@@ -45,5 +46,9 @@ class SenderNode : Node {
     ipNetPort.send(tcpDatagram);
 
     counter++;
+  }
+
+  override string status() {
+    return format("sent:%4d", counter);
   }
 }

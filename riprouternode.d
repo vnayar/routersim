@@ -8,6 +8,7 @@ import node;
 import ipnet;
 import ripmessage;
 
+import std.string;
 debug import std.stdio;
 
 
@@ -28,7 +29,11 @@ class RipRouterNode : Node {
   }
   // A mapping from destination address to port.
   RouteEntry[uint] addressRouteEntryMap;
+
+  // Status information.
   uint forwardCount;
+  uint dropCount;
+  uint routingCount;
 
   this() {
   }
@@ -69,7 +74,6 @@ class RipRouterNode : Node {
         debug writeln("routernode.run(): Routing packet.");
         debug writeln("## srcPortIndex = ", srcPortIndex, ", ",
                       ipNetPort.getAddress.value);
-        forwardCount++;
         forwardDatagram(ipDatagram);
       }
     }
@@ -79,6 +83,11 @@ class RipRouterNode : Node {
     sendRipResponse();
 
     debug writeln("routernode.run(): Done.");
+  }
+
+  override string status() {
+    return format("forwardCount:%4d dropCount:%4d routingCount:%4d",
+                  forwardCount, dropCount, routingCount);
   }
 
   /**
@@ -136,6 +145,7 @@ class RipRouterNode : Node {
     debug writeln("udpDatagram.getUdpHeader().getSourcePort() = ",
                   udpDatagram.getUdpHeader().getSourcePort());
     if (ripMessage.getCommand() == RipCommand.RESPONSE) {
+      routingCount++;
       debug writeln("receiveRipMessage() - Test C");
       // Ignore responses that have the wrong source port.
       if (udpDatagram.getUdpHeader().getSourcePort() != 520)
@@ -207,8 +217,12 @@ class RipRouterNode : Node {
 
 
     // If we do not have a route, drop the datagram.
-    if (destAddr !in addressRouteEntryMap)
+    if (destAddr !in addressRouteEntryMap) {
+      dropCount++;
       return;
+    }
+
+    forwardCount++;
 
     uint port = addressRouteEntryMap[destAddr].port;
     debug writeln("routernode.run(): Sending to port ", port);

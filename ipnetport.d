@@ -11,7 +11,16 @@ debug import std.stdio;
  * A NetPort specialized to handle IP traffic.
  */
 class IpNetPort : NetPort {
+  struct Status {
+    uint bytes;
+    uint packets;
+    uint errors;
+    uint dropped;
+  }
+
   IpAddress address;
+  Status rx;  // Receive status
+  Status tx;  // Transmit status
 
   /**
    * Filter out self-addressed IpDatagrams.
@@ -22,6 +31,7 @@ class IpNetPort : NetPort {
     auto header = new IpHeader(datagram[0..IpHeader.headerWords]);
     if (header.getSourceAddress() == address.value) {
       debug writeln("IpNetPort.update(): Dropping self-addressed datagram.");
+      rx.dropped++;
       return;
     }
     super.update();
@@ -47,6 +57,11 @@ class IpNetPort : NetPort {
     IpHeader ipHeader = new IpHeader(buffer.peek(IpHeader.headerWords));
     uint totalWords = ipHeader.getTotalLength() / cast(uint) uint.sizeof;
     uint[] datagram = buffer.read(totalWords);
+
+    // Update our status information.
+    rx.bytes += ipHeader.getTotalLength();
+    rx.packets++;
+
     return new IpDatagram(datagram);
   }
 
@@ -54,6 +69,10 @@ class IpNetPort : NetPort {
    * Put an IpDatagram on the Net to be picked up by all attached NetPorts.
    */
   void send(IpDatagram ipDatagram) {
+    // Update our status information.
+    tx.packets++;
+    tx.bytes += ipDatagram.getIpHeader().getTotalLength();
+
     Net net = getNet();
     net.setDatagram(ipDatagram.datagram);
     net.notify(this);

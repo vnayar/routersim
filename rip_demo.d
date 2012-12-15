@@ -124,9 +124,17 @@ void main() {
   auto routerNodes = [routerNode1, routerNode2, routerNode3, routerNode4,
                       routerNode5];
   auto receiverNodes = [receiverNode1, receiverNode2];
+  Node[string] allNodes =
+    ["senderNode1": cast(Node) senderNode1,
+     "senderNode2": senderNode2,
+     "routerNode1": routerNode1, "routerNode2": routerNode2,
+     "routerNode3": routerNode3, "routerNode4": routerNode4,
+     "routerNode5": routerNode5,
+     "receiverNode1": receiverNode1, "receiverNode2": receiverNode2];
 
   // Give the routes enough time to initialize.
-  foreach (i ; 0..10) {
+  writeln("Propigating routing tables.");
+  foreach (i ; 0..routerNodes.length) {
     foreach (routerNode ; routerNodes) {
       routerNode.run();
     }
@@ -140,31 +148,49 @@ void main() {
             routerNode.addressRouteEntryMap);
   }
 
+  showNodeStatus(allNodes);
+
   // Now get some packets sent out.
+  writeln("Sending 3 packets from senderNode1.");
   foreach (i ; 0 .. 3) {
-    foreach (senderNode ; senderNodes) {
-      senderNode.run();
-    }
+    senderNode1.run();
   }
 
   // Give the routers some time to send the data along.
-  foreach (i ; 0 .. 10) {
+  writeln("Running router nodes.");
+  foreach (i ; 0 .. routerNodes.length) {
     foreach (routerNode ; routerNodes) {
       routerNode.run();
     }
   }
 
+  showNodeStatus(allNodes);
+
+  // Now get some packets sent out.
+  writeln("Sending 3 packets from senderNode2.");
+  foreach (i ; 0 .. 3) {
+    senderNode2.run();
+  }
+
+  // Give the routers some time to send the data along.
+  writeln("Running router nodes.");
+  foreach (i ; 0 .. routerNodes.length) {
+    foreach (routerNode ; routerNodes) {
+      routerNode.run();
+    }
+  }
+
+  showNodeStatus(allNodes);
+
   // Now check for data in the receiver nodes.
+  writeln("Running receiver nodes.");
   foreach (i ; 0 .. 3) {
     foreach (receiverNode ; receiverNodes) {
       receiverNode.run();
     }
   }
 
-  // Print out the routing tables thus far.
-  foreach (index, routerNode ; routerNodes) {
-    writeln("==== ", index + 1, " forwardCount = ", routerNode.forwardCount);
-  }
+  showNodeStatus(allNodes);
 
   // Check that packet counts are what we expect.
   assert(senderNode1.counter == 3);
@@ -174,4 +200,23 @@ void main() {
   writeln("receiverNode2.counter = ", receiverNode2.counter);
   assert(receiverNode2.counter == 3);
 
+}
+
+/**
+ * Print to the console the status of node interfaces.
+ */
+void showNodeStatus(Node[string] nodes) {
+  writeln("==== Begin Report ====");
+  foreach (nodeName, node ; nodes) {
+    writefln("[%10s - %s]", nodeName, node.status());
+    foreach (index, ipNetPort ; node.getIpNetPorts()) {
+      auto rx = ipNetPort.rx;
+      writefln("  [%2d: rx:{bytes:%8d packets:%4d dropped:%4d}]",
+              index, rx.bytes, rx.packets, rx.dropped);
+      auto tx = ipNetPort.tx;
+      writefln("  [%2d: tx:{bytes:%8d packets:%4d dropped:%4d}]",
+              index, tx.bytes, tx.packets, tx.dropped);
+    }
+  }
+  writeln("==== End Report ====");
 }

@@ -31,14 +31,14 @@ void main() {
   auto addressPortMapCSV = q"EOS
 10.0.0.1,0
 10.0.0.2,0
-10.0.1.1,2
+10.0.1.1,3
 EOS";
   auto routerNode = new CsvRouterNode(8); // An 8-port router.
   routerNode.loadAddressPortMapFromCSV(addressPortMapCSV);
   net1.attach(routerNode.getIpNetPort(0));
   
   auto net2 = new Net();
-  net2.attach(routerNode.getIpNetPort(2));
+  net2.attach(routerNode.getIpNetPort(3));
   
   auto receiverNode = new ReceiverNode(IpAddress("10.0.1.1"));
   net2.attach(receiverNode.getIpNetPort(0));
