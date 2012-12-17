@@ -1,6 +1,7 @@
 #!/bin/bash
 
 files="\
+  conv.d \
   ipaddress.d \
   ipheader.d \
   ipdatagram.d \
@@ -21,7 +22,7 @@ files="\
 # Test listed files.
 for file in $files ; do
     echo -n "Testing $file ... "
-    cmd="rdmd --main -w -unittest $file"
+    cmd="rdmd --main -w -debug -unittest $file"
     $($cmd &> unittest.log)
     if test $? -eq "0" ; then
         echo "pass."

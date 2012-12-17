@@ -1,5 +1,4 @@
 import net;
-import buffer;
 
 debug import std.stdio;
 
@@ -9,35 +8,21 @@ debug import std.stdio;
  * Note: In the observer patter, this is the observer.
  */
 class NetPort {
-  private Buffer!uint buffer;
   private Net net;
-  
-  this() {
-    buffer = new Buffer!uint();
-  }
-
-  /// Respond to messages from the Net.
-  void update() {
-    buffer.write(net.getDatagram());
-  }
 
   // Used by derived classes.
-  Net getNet() {
+  final Net getNet() {
     return net;
   }
 
   /// Called by a Net when being attached.
-  void setNet(Net net) {
+  final void setNet(Net net) {
     this.net = net;
   }
 
-  Buffer!uint getBuffer() {
-    return buffer;
-  }
+  /// Respond to messages from the Net.
+  abstract void update();
 
-  bool hasData() {
-    debug writeln("NetPort.hasData(): buffer.length = ", buffer.length);
-    return buffer.length > 0;
-  }
-
+  /// Indicates whether a read operation may be performed.
+  abstract bool hasData();
 }

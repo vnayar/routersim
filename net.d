@@ -62,9 +62,8 @@ unittest {
 
   // Make a simple extension of NetPort that has minimal dependency.
   class TestNetPort : NetPort {
-    override void update() {
-      updateCounter++;
-    }
+    override void update() { updateCounter++; }
+    override bool hasData() { return true; }
   }
 
   auto net = new Net();

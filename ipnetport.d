@@ -1,3 +1,4 @@
+import arraybuffer;
 import ipheader;
 import ipdatagram;
 import ipaddress;
@@ -10,7 +11,7 @@ debug import std.stdio;
 /**
  * A NetPort specialized to handle IP traffic.
  */
-class IpNetPort : NetPort {
+class IpNetPort : /*implements*/ NetPort {
   struct Status {
     uint bytes;
     uint packets;
@@ -18,9 +19,19 @@ class IpNetPort : NetPort {
     uint dropped;
   }
 
+  private ArrayBuffer!uint buffer;
+
   IpAddress address;
   Status rx;  // Receive status
   Status tx;  // Transmit status
+
+  this() {
+    buffer = new ArrayBuffer!uint();
+  }
+
+  ////
+  // NetPort Class Methods
+  ////
 
   /**
    * Filter out self-addressed IpDatagrams.
@@ -34,8 +45,19 @@ class IpNetPort : NetPort {
       rx.dropped++;
       return;
     }
-    super.update();
+
+    buffer.write(getNet().getDatagram());
   }
+
+  /// Indicates whether a read operation may be performed.
+  override bool hasData() {
+    debug writeln("NetPort.hasData(): buffer.length = ", buffer.length());
+    return buffer.length() >= IpHeader.headerWords;
+  }
+
+  ////
+  // Class Specific Methods
+  ////
 
   IpAddress getAddress() {
     return address;
@@ -50,10 +72,9 @@ class IpNetPort : NetPort {
    */
   IpDatagram receive()
   in {
-    assert(getBuffer().length() >= IpHeader.headerWords, "Not enough data to read.");
+    assert(buffer.length() >= IpHeader.headerWords, "Not enough data to read.");
   }
   body {
-    auto buffer = getBuffer();
     IpHeader ipHeader = new IpHeader(buffer.peek(IpHeader.headerWords));
     uint totalWords = ipHeader.getTotalLength() / cast(uint) uint.sizeof;
     uint[] datagram = buffer.read(totalWords);
@@ -77,6 +98,7 @@ class IpNetPort : NetPort {
     net.setDatagram(ipDatagram.datagram);
     net.notify(this);
   }
+
 }
 
 unittest {
