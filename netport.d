@@ -5,6 +5,8 @@ debug import std.stdio;
 /**
  * A port on a network node to a network that responds to new messages on the Net.
  * Messages are added to the NetPort's internal buffer.
+ * This base class can be implemented to add direct support to higher level
+ * protocols at the same level as IP rather than simply raw data.
  * Note: In the observer patter, this is the observer.
  */
 class NetPort {

@@ -6,7 +6,7 @@ debug import std.stdio;
 /**
  * A very simple memory buffer to simulate network queues.
  */
-class ArrayBuffer(T) : /*inplements*/ Buffer!T {
+class ArrayBuffer(T) : /*implements*/ Buffer!T {
   T[] dataBuffer;
 
   // Look ahead and read without consuming from the buffer.

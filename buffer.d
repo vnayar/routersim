@@ -1,7 +1,16 @@
 debug import std.stdio;
 
 /**
- * A very simple memory buffer to simulate network queues.
+ * An interface for an object that can store and retrieve data
+ * These can range from simple array memory buffers to complicated
+ * protocols such as Ethernet or SONET.
+ *
+ * Buffers may be implemented in terms of other buffers, thus
+ * a successive layers of wrapped protocols may be simulated.
+ *
+ * For example, suppose we have many buffers that take another
+ * buffer as a constructor argument:
+ *   auto myBuffer = new IpBuffer( new EthernetBuffer( new SONETBuffer() ) );
  */
 interface Buffer(T) {
   // Look ahead and read without consuming from the buffer.

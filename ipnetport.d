@@ -19,7 +19,8 @@ class IpNetPort : /*implements*/ NetPort {
     uint dropped;
   }
 
-  private ArrayBuffer!uint buffer;
+  /// The manner in which data is stored sent/received, the physical layer.
+  private Buffer!uint buffer;
 
   IpAddress address;
   Status rx;  // Receive status

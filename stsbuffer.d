@@ -1,5 +1,8 @@
+import buffer;
 import arraybuffer;
 import conv;
+
+debug import std.stdio;
 
 /**
  * A buffer that stores data internally in STS-1 format.
@@ -31,13 +34,14 @@ import conv;
  * S1  M1/0 E2      N1       ...
  *|--Transport--|--Synchronous Payload Envelope--|
  *
+ * http://www.itu.int/rec/T-REC-G.707-200701-I/en
  */
-class STS1Buffer(T) : Buffer!T {
+class STSBuffer(T) : Buffer!T {
   /* SONET/SDH are byte-oriented protocols, so conversion must take place
      if types other than bytes are desired. */
-  ArrayBuffer!ubyte dataBuffer;
+  Buffer!ubyte dataBuffer;
 
-  private size_t dataLength = 0;
+  private size_t totalDataBytes = 0;
   private size_t writePos = 0;
   private size_t readPos = 0;
 
@@ -68,6 +72,11 @@ class STS1Buffer(T) : Buffer!T {
     dataBuffer = new ArrayBuffer!ubyte();
   }
 
+  this(Buffer!ubyte buffer) {
+    dataBuffer = buffer;
+  }
+
+
   // No public function should violate these constraints.
   invariant() {
     assert(writePos < 810, "Write position out of frame bounds!");
@@ -87,7 +96,7 @@ class STS1Buffer(T) : Buffer!T {
 
     int index = 0;
     while (index < byteArray.length) {
-      uint nextByte;
+      ubyte nextByte;
       if (writePos % 90 <= 3) {
         // We are in a header section.
         size_t row = writePos / 90;
@@ -117,7 +126,7 @@ class STS1Buffer(T) : Buffer!T {
         newBIP2 ^= nextByte;
 
         // Update the number of actual data bytes in our buffer.
-        dataLength++;
+        totalDataBytes++;
       }
 
       // Update the bit-interleaved-parity.
@@ -148,6 +157,8 @@ class STS1Buffer(T) : Buffer!T {
       case 1: return A2;  // A2
       case 2: return sectionTrace;  // J0
       case 3: return pathTrace;  // J1
+      default:
+        throw new Error("Header location out of bounds.");
       }
     case 1:
       switch (col) {
@@ -155,6 +166,8 @@ class STS1Buffer(T) : Buffer!T {
       case 1: return 0;  // E1 - Orderwire, voice channel for technicians.
       case 2: return 0;  // F1 - Section User
       case 3: return oldBIP3;  // B3 - Section Parity.
+      default:
+        throw new Error("Header location out of bounds.");
       }
     case 2:
       switch (col) {
@@ -165,6 +178,8 @@ class STS1Buffer(T) : Buffer!T {
       // http://www.cisco.com/en/US/tech/tk482/tk607/
       //     technologies_tech_note09186a00800942bd.shtml
       case 3: return 0x02;  // (Virtual Tributaries)
+      default:
+        throw new Error("Header location out of bounds.");
       }
     case 3:
       switch (col) {
@@ -172,6 +187,8 @@ class STS1Buffer(T) : Buffer!T {
       case 1: return 0;  // H2 - data rates and clocks.
       case 2: return 0;  // H3 - Negative frequency adjustment.
       case 3: return 0;  // G1 - Path Status and performance.
+      default:
+        throw new Error("Header location out of bounds.");
       }
     case 4:
       switch (col) {
@@ -179,6 +196,8 @@ class STS1Buffer(T) : Buffer!T {
       case 1: return 0;  // K1 - Protection Signals
       case 2: return 0; // K2
       case 3: return 0;  // F2 - Path User Channel
+      default:
+        throw new Error("Header location out of bounds.");
       }
     case 5:
       switch (col) {
@@ -186,6 +205,8 @@ class STS1Buffer(T) : Buffer!T {
       case 1: return 0;  // D5
       case 2: return 0; // D6
       case 3: return 0;  // H4
+      default:
+        throw new Error("Header location out of bounds.");
       }
     case 6:
       switch (col) {
@@ -193,6 +214,8 @@ class STS1Buffer(T) : Buffer!T {
       case 1: return 0;  // D8
       case 2: return 0; // D9
       case 3: return 0;  // Z3
+      default:
+        throw new Error("Header location out of bounds.");
       }
     case 7:
       switch (col) {
@@ -200,6 +223,8 @@ class STS1Buffer(T) : Buffer!T {
       case 1: return 0;  // D11
       case 2: return 0; // D12
       case 3: return 0;  // Z4
+      default:
+        throw new Error("Header location out of bounds.");
       }
     case 8:
       switch (col) {
@@ -207,14 +232,18 @@ class STS1Buffer(T) : Buffer!T {
       case 1: return 0;  // M1/0 - Remote Line Error Indication
       case 2: return 0; // E2 - Order wire
       case 3: return 0;  // N1
+      default:
+        throw new Error("Header location out of bounds.");
       }
+    default:
+      throw new Error("Header location out of bounds.");
     }
   }
 
   // Determine how many items are currently in the buffer.
   // Item size is defined by our compile-time parameters.
   size_t length() {
-    return dataLength * ubyte.sizeof / T.sizeof;
+    return totalDataBytes * ubyte.sizeof / T.sizeof;
   }
 
   // Read and consume a single data item.
@@ -235,6 +264,7 @@ class STS1Buffer(T) : Buffer!T {
         dataBuffer.read();  // Throw away this byte.
       } else {
         readBytes[totalBytesRead++] = dataBuffer.read();
+        totalDataBytes--;
       }
       readPos++;
 
@@ -242,5 +272,55 @@ class STS1Buffer(T) : Buffer!T {
         readPos -= 0;
       }
     }
+
+    // Convert to our target type before returning.
+    return to!T(readBytes);
   }
+
+  // Look ahead and read without consuming from the buffer.
+  T peek() {
+    return peek(1)[0];
+  }
+
+  // Look at but do not consume many data items.
+  T[] peek(size_t num) {
+    ubyte[] readBytes;
+    // Pre-allocate our read buffer.
+    readBytes.length = num * T.sizeof / ubyte.sizeof;
+    size_t totalBytesRead = 0;
+    size_t currentReadPos = readPos;
+
+    // Look ahead and make padding for headers.
+    size_t peekBytes = (readBytes.length / 90 + 1) * 4;
+    // But watch out for edges.
+    if (peekBytes > dataBuffer.length())
+      peekBytes = dataBuffer.length();
+
+    ubyte[] peekData = dataBuffer.peek(peekBytes);
+    size_t peekPos = 0;
+    while (totalBytesRead < readBytes.length) {
+      // Fist we discard header bytes.
+      if (currentReadPos % 90 > 3) {
+        readBytes[totalBytesRead++] = peekData[peekPos];
+      }
+      currentReadPos++;
+      peekPos++;
+
+      if (currentReadPos == 810) {
+        currentReadPos -= 0;
+      }
+    }
+
+    // Convert to our target type before returning.
+    return to!T(readBytes);
+  }
+
+}
+
+unittest {
+  auto stsBuffer = new STSBuffer!uint();
+  stsBuffer.write([1u, 2u, 3u, 4u]);
+  auto readData = stsBuffer.read(4);
+  debug writeln("readData = ", readData);
+  assert(readData == [1u, 2u, 3u, 4u]);
 }
