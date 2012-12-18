@@ -1,0 +1,53 @@
+http://www.cisco.com/en/US/tech/tk482/tk607/
+  technologies_tech_note09186a0080094313.shtml
+
+  DS1    Router     Regenerator     ADM     Regenerator    Router    DS1
+       +-------+    +---------+   +-----+   +---------+    +-----+
+ ------|       |----|         |---|     |---|         |----|     |------
+       +-------+    +---------+   +-----+   +---------+    +-----+
+          |<-Section--->|<-Section-->|<-Section->|<-Section--->|
+          |                          |                         |
+          |<-------Line------------->|<-------Line------------>|
+          |                                                    |
+          |<-----------------------Path----------------------->|
+
+Each ADM can insert/remove SONET frames.
+
+
+  +-----+     +---+     +--------+      +---+     +---+
+  |SONET|<--->|GFP|<--->|Ethernet|<---->|IP |<--->|TCP|
+  +-----+     +---+     +--------+      +---+     +---+
+              <or>
+              +---+
+              |PPP|
+              +---+
+
+Protocol Information
+
+* SONET
+** Byte Oriented
+** STS-1 Repeats every 810 bytes.
+* GFP
+** Byte Oriented
+** Container: Any
+* Ethernet
+** Bit oriented
+** Container: Any
+* IP
+** Container:  Any
+** 32-bit Word Oriented
+* TCP
+** Container: IP
+** 32-bit Word Oriented
+
+
+
+
+
+
+
+
+
+
+
+
