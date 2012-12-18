@@ -37,13 +37,13 @@ class ArrayBuffer(T) : /*implements*/ Buffer!T {
 
   // Write a single item on the buffer for subsequent reading.
   void write(T data) {
-    debug writeln("write(): writing 1 unit.");
+    debug(2) writeln("write(): writing 1 unit.");
     dataBuffer ~= data;
   }
 
   // Write many data items on the buffer.
   void write(T[] data) {
-    debug writeln("write(): writing ", data.length, " units.");
+    debug(2) writeln("write(): writing ", data.length, " units.");
     dataBuffer ~= data;
   }
 

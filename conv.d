@@ -19,7 +19,7 @@ T1[] to(T1, T2)(T2[] t2)
   T2 mask = ~0;  // Start will all bits set to 1.
   mask <<= offset;
 
-  debug writefln("mask = %x, offset = %d", mask, offset);
+  debug(2) writefln("mask = %x, offset = %d", mask, offset);
 
   T1[] littleWords;
   // Advance allocation saves us from dynamic resizing.
@@ -44,7 +44,7 @@ unittest {
 
   assert(bigWords[0] == 0x0A0B0C0D, "Original data modified!");
   assert(littleWords.length == 8, "Wrong number of little words!");
-  debug writeln("littleWords = ", littleWords);
+  debug(2) writeln("littleWords = ", littleWords);
   assert(littleWords[0] == 0x0A && littleWords[1] == 0x0B);
   assert(littleWords[2] == 0x0C && littleWords[3] == 0x0D);
   assert(littleWords[4] == 0x0E && littleWords[7] == 0x02);
@@ -89,6 +89,6 @@ unittest {
 
   assert(littleWords[0] == 0x0A, "Original data modified!");
   assert(bigWords.length == 2, "Wrong number of big words!");
-  debug writeln("bigWords = ", bigWords);
+  debug(2) writeln("bigWords = ", bigWords);
   assert(bigWords[0] == 0x0A0B0C0D && bigWords[1] == 0x0E0F0102);
 }

@@ -5,7 +5,7 @@ import conv;
 debug import std.stdio;
 
 /**
- * A buffer that stores data internally in STS-1 format.
+ * A buffer that stores data internally in STS-1 format (G.707).
  * Unlike the real thing, there is no time component present, thus
  * new data is packed as tightly as possible in the STS frames.
  *
@@ -269,7 +269,7 @@ class STSBuffer(T) : Buffer!T {
       readPos++;
 
       if (readPos == 810) {
-        readPos -= 0;
+        readPos = 0;
       }
     }
 
@@ -290,8 +290,8 @@ class STSBuffer(T) : Buffer!T {
     size_t totalBytesRead = 0;
     size_t currentReadPos = readPos;
 
-    // Look ahead and make padding for headers.
-    size_t peekBytes = (readBytes.length / 90 + 1) * 4;
+    // Look ahead and pad for headers, 4 header bytes per 90 byte row.
+    size_t peekBytes = readBytes.length + (readBytes.length / 86 + 1) * 4;
     // But watch out for edges.
     if (peekBytes > dataBuffer.length())
       peekBytes = dataBuffer.length();
@@ -318,9 +318,35 @@ class STSBuffer(T) : Buffer!T {
 }
 
 unittest {
-  auto stsBuffer = new STSBuffer!uint();
-  stsBuffer.write([1u, 2u, 3u, 4u]);
-  auto readData = stsBuffer.read(4);
-  debug writeln("readData = ", readData);
-  assert(readData == [1u, 2u, 3u, 4u]);
+  debug writeln("-- unittest: ", __FILE__, ":", __LINE__, " --");
+
+  // Create a buffer of variable size.
+  uint[] createTestData(uint n) {
+    uint[] data;
+    data.length = n;
+    foreach (uint index, ref d ; data) {
+      d = index;
+    }
+    return data;
+  }
+
+  void testReadWritePeek(uint[] testData) {
+    auto stsBuffer = new STSBuffer!uint();
+    stsBuffer.write(testData);
+    auto preReadLength = stsBuffer.length();
+    auto peekData = stsBuffer.peek(testData.length);
+    assert(stsBuffer.length() == preReadLength,
+           "Peek must not modify length.");
+    auto readData = stsBuffer.read(testData.length);
+    debug(2) writeln("readData = ", readData);
+    assert(readData == peekData, "Read data does not match peek data.");
+    assert(readData == testData, "Read data does not match write data.");
+  }
+
+  debug writeln("Testing single-row read-write-peek.");
+  testReadWritePeek(createTestData(5));
+  debug writeln("Testing multi-row read-write-peek.");
+  testReadWritePeek(createTestData(90));  // 360 bytes, over 5 rows.
+  debug writeln("Testing multi-frame read-write-peek.");
+  testReadWritePeek(createTestData(1000));  // 4000 bytes, over 6 frames.
 }
